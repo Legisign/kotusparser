@@ -4,17 +4,19 @@
 
   Tommi Nieminen <software@legisign.org> 2013-17.
   Distributed under the terms of the GNU General Public License (GPL)
-  version 3 or later. See “copyleft.txt”.
+  version 3 or later.
 
-  2014-03-24  1.0.5  Moved to GitHub. Changed version numbering to PyPI
-                     style.
+  Exceptions are expected to be handled by the caller. Possible exceptions
+  include:
+  * xml.parsers.expat.ExpatError -- for all XML parsing errors
+
+  2017-10-09  1.1.0  Added consonant gradation type field.
 
 '''
 
 import xml.parsers.expat
-from xml.parsers.expat import ExpatError as ParseError
 
-version = '1.0.5'
+version = '1.1.0'
 
 class KotusParser(object):
     '''Iterates through a Kotus-format XML word list.
@@ -27,8 +29,9 @@ class KotusParser(object):
     def __init__(self, stream):
         # Public
         self.stream = stream
-        self.word = None
-        self.paradigm = None
+        self.word = None            # word type
+        self.paradigm = None        # numeric paradigm
+        self.gradation = None       # consonant gradation type
 
         # Implementation details
         self._element_stack = []
@@ -38,38 +41,46 @@ class KotusParser(object):
         self._xmlparser.CharacterDataHandler = self._char_data
 
     def __iter__(self):
+        '''Return an iterator.'''
         return self
 
     def __next__(self):
-        # May raise xml.parsers.expat.ExpatError exception, handle in caller
+        '''Return next item.'''
         self._xmlparser.Parse(next(self.stream))
         while not self.word:
             self._xmlparser.Parse(next(self.stream))
-        return (self.word, self.paradigm)
+        return (self.word, self.paradigm, self.gradation)
 
     def next(self):
-        # This function is for compatibility with Python 2.
+        '''Python 2 compatibility function; for Python 3, use __next__.'''
         return self.__next__()
 
     def _start_element(self, element, attribs):
+        '''Handle start elements'''
         self._element_stack.append(element)
         # This is to ensure correct output after end-of-data
         if element == 'st':
            self.word = self.paradigm = None
 
     def _end_element(self, element):
+        '''Handle end elements'''
         self._element_stack.pop()
 
     def _char_data(self, data):
+        '''Handle character data (text outside tags)'''
         if self._element_stack[-1] == 's':
-            self.word = data
+            self.word = data.strip()
         elif self._element_stack[-1] == 'tn' and data.isnumeric():
             self.paradigm = int(data)
+        elif self._element_stack[-1] == 'av':
+            self.gradation = data
 
 # Simple test if run as a script
 if __name__ == '__main__':
     import sys
     for arg in sys.argv[1:]:
         with open(arg, 'r') as f:
-            for word, paradigm in KotusParser(f):
-                print('{0}:{1}'.format(word, paradigm))
+            for word, paradigm, gradation in KotusParser(f):
+                if not paradigm:
+                    paradigm = '(tuntematon)'
+                print('{} - {} - {}'.format(word, paradigm, gradation))

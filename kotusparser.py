@@ -6,7 +6,7 @@
   Distributed under the terms of the GNU General Public License (GPL)
   version 3 or later. See “copyleft.txt”.
 
-  2014-03-24  1.0.5  Moved to GitHub. Changed version numbering to PyPi 
+  2014-03-24  1.0.5  Moved to GitHub. Changed version numbering to PyPI
                      style.
 
 '''

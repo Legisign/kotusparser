@@ -14,6 +14,7 @@
                      not a file. File has to opened here. (TN)
   2017-10-26  0.5.0  Simplified structure. A list will suffice for each
                      lexeme instead of a dict.
+  2017-10-26  0.6.0  Taking that back! Of course one needs a dict.
 
 '''
 
@@ -22,7 +23,7 @@ import os.path
 import json
 import kotusparser
 
-version = '0.5.0'
+version = '0.6.0'
 
 def die(msg):
     prg = os.path.basename(sys.argv[0])
@@ -35,13 +36,11 @@ for arg in sys.argv[1:]:
     if not os.path.exists(arg):
         die('Not found: {}'.format(arg))
     jsonfile = os.path.splitext(arg)[0] + '.json'
-    vocab = []
+    vocab = {}
     try:
         with open(arg, 'r') as xml:
             try:
-                for word, para, grad in kotusparser.KotusParser(xml):
-                    if word:
-                        vocab.append([word, para, grad])
+                vocab = {w: [p, g] for w, p, g in kotusparser.KotusParser(xml)}
             except kotusparser.ParseError:
                 die('Cannot read or parse error: {}'.format(arg))
     except (PermissionError, IOError):

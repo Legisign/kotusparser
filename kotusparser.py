@@ -10,13 +10,15 @@
   include:
   * xml.parsers.expat.ExpatError -- for all XML parsing errors
 
-  2017-10-09  1.1.0  Added consonant gradation type field.
+  2017-10-26  1.1.1  Bug fix: once the gradation field was set, its value was
+                     used for subsequent words unless it was explicitly set
+                     again.
 
 '''
 
 import xml.parsers.expat
 
-version = '1.1.0'
+version = '1.1.1'
 
 class KotusParser(object):
     '''Iterates through a Kotus-format XML word list.
@@ -60,7 +62,7 @@ class KotusParser(object):
         self._element_stack.append(element)
         # This is to ensure correct output after end-of-data
         if element == 'st':
-           self.word = self.paradigm = None
+           self.word = self.paradigm = self.gradation = None
 
     def _end_element(self, element):
         '''Handle end elements'''
